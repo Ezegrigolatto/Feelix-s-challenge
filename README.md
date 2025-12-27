@@ -22,17 +22,17 @@ A Next.js application featuring a dashboard with data visualization and filterin
 
 When using Next.js apps, you need to prefix your environment variables with `NEXT_PUBLIC_` to make them accessible on the client side.
 
- Never store or expose sensitive information such as secrets, database credentials, or JWT secret keys in environment variables prefixed with `NEXT_PUBLIC_`. These variables are compiled into the JavaScript bundle and can be accessed by anyone inspecting your application's source code in the browser.
+Never store or expose sensitive information such as secrets, database credentials, or JWT secret keys in environment variables prefixed with `NEXT_PUBLIC_`. These variables are compiled into the JavaScript bundle and can be accessed by anyone inspecting your application's source code in the browser.
 
 For sensitive information, use environment variables **without** the `NEXT_PUBLIC_` prefix. These variables will only be available on the server side.
 
 #### Environment Files
 
-| File | Purpose |
-|------|---------|
-| `.env.development` / `.env.local` | Development mode (`next dev`) |
-| `.env.staging` | Pre-production / QA environments |
-| `.env.production` | Production deployments |
+| File                              | Purpose                          |
+| --------------------------------- | -------------------------------- |
+| `.env.development` / `.env.local` | Development mode (`next dev`)    |
+| `.env.staging`                    | Pre-production / QA environments |
+| `.env.production`                 | Production deployments           |
 
 ---
 
@@ -88,12 +88,12 @@ The dashboard page:
 
 #### Test URLs
 
-| URL | Result |
-|-----|--------|
-| `/verify?token=valid-token-123` | ✅ Success |
-| `/verify?token=expired-token-456` | ❌ Error (expired) |
-| `/verify?token=invalid` | ❌ Error (invalid) |
-| `/verify` | ❌ Error (no token) |
+| URL                               | Result              |
+| --------------------------------- | ------------------- |
+| `/verify?token=valid-token-123`   | ✅ Success          |
+| `/verify?token=expired-token-456` | ❌ Error (expired)  |
+| `/verify?token=invalid`           | ❌ Error (invalid)  |
+| `/verify`                         | ❌ Error (no token) |
 
 ---
 
@@ -137,12 +137,12 @@ The dashboard page:
 
 #### Test URLs
 
-| URL | Result |
-|-----|--------|
-| `/forgot-password` | Request reset |
+| URL                                       | Result              |
+| ----------------------------------------- | ------------------- |
+| `/forgot-password`                        | Request reset       |
 | `/reset-password?token=valid-reset-token` | ✅ Successful reset |
-| `/reset-password?token=invalid` | ❌ Token error |
-| `/reset-password` | ❌ Error (no token) |
+| `/reset-password?token=invalid`           | ❌ Token error      |
+| `/reset-password`                         | ❌ Error (no token) |
 
 ---
 
@@ -171,6 +171,7 @@ pnpm install
 ```
 
 ### .env Setup
+
 Create a `.env.local` file in the root directory and add the necessary environment variables. Check the `.env` file content sent by email.
 
 ### Development
@@ -233,3 +234,50 @@ Open [http://localhost:3000](http://localhost:3000) in your browser to see the a
 - **Styling:** Tailwind CSS
 - **Charts:** Recharts
 - **HTTP Client:** Custom API client (`lib/api.ts`)
+
+## Answering to challenge's questions
+
+1. How do these flows behave differently: Development, Staging, and Production.
+
+In Development, the main goal is speed when delivering features and debugging.
+Mocked APIs, fake data, relaxed validations, detailed logs, hot reload, and quick experiments are allowed.
+
+In Staging, the goal is realism and production replication.
+This environment should mirror production as closely as possible: same auth flows, same middleware, same build process, same validations. Staging exists to catch integration and configuration issues, not basic logic bugs.
+
+In Production, the focus shifts to stability, resilience, and observability.
+You want controlled error handling, proper fallbacks, timeouts, retries, monitoring, and minimal console noise. This is where real users, real data, real latency, and weird edge cases show up.
+
+2. What frontend mistakes commonly break CI/CD pipelines?
+
+- Library version mismatches between local and CI environments due to lockfile discrepancies.
+
+- Missing or misnamed environment variables that exist locally but not in CI.
+
+- Import issues.
+
+- TSC errors that are ignored locally but fail in CI.
+
+- Linting or formatting rules enforced in CI but ignored locally such as console statements, any allowances, unused vars, etc.
+
+- Build-time errors caused by using browser-only APIs during SSR or static builds.
+
+3. How do you protect frontend code from backend API changes?
+
+- Use shared contracts or schemas when possible (OpenAPI, GraphQL, runtime validation).
+
+- Implement versioning for APIs to avoid breaking changes.
+
+- Be defensive: optional fields, defaults, and graceful fallbacks.
+
+- If possible, share a typing catalog, use code generation tools or validators like ZOD that warn you before the code is deployed.
+
+4. How should tokens be handled safely in frontend authentication flows?
+
+- Avoid storing tokens or sensitive data in localStorage or sessionStorage due to XSS risks. HttpOnly cookies are preferred in this case.
+
+- Use short lifetimes for access tokens and refresh them securely.
+
+- Implement proper token invalidation on logout or expiration.
+
+- Handle token expiration correctly.
