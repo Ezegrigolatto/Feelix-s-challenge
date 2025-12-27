@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { api, ApiError } from '@/lib/api';
 
 type VerificationStatus = 'idle' | 'loading' | 'success' | 'error';
 
@@ -19,32 +20,27 @@ export default function VerifyPage() {
   const [resendEmail, setResendEmail] = useState('');
   const [resendStatus, setResendStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
 
+  
   const verifyToken = useCallback(async (verificationToken: string) => {
     setStatus('loading');
     setErrorMessage('');
 
     try {
-      const response = await fetch('/api/auth/verify', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: verificationToken }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Verification failed');
-      }
-
+      await api.post('/auth/verify', { token: verificationToken });
       setStatus('success');
     } catch (err) {
       setStatus('error');
-      setErrorMessage(err instanceof Error ? err.message : 'An unexpected error occurred');
+      if (err instanceof ApiError) {
+        setErrorMessage(err.message);
+      } else {
+        setErrorMessage('An unexpected error occurred');
+      }
     }
   }, []);
-
+  
   useEffect(() => {
     if (token) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       verifyToken(token);
     } else {
       setStatus('error');
@@ -75,18 +71,7 @@ export default function VerifyPage() {
     setResendStatus('loading');
 
     try {
-      const response = await fetch('/api/auth/resend-verification', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: resendEmail }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to resend verification email');
-      }
-
+      await api.post('/auth/resend-verification', { email: resendEmail });
       setResendStatus('success');
     } catch (err) {
       setResendStatus('error');

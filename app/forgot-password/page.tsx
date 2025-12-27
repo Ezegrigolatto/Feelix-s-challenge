@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { api, ApiError } from '@/lib/api';
 
 type FormStatus = 'idle' | 'loading' | 'success' | 'error';
 
@@ -19,22 +20,15 @@ export default function ForgotPasswordPage() {
     setErrorMessage('');
 
     try {
-      const response = await fetch('/api/auth/password-reset-request', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to send reset email');
-      }
-
+      await api.post('/auth/password-reset-request', { email });
       setStatus('success');
     } catch (err) {
       setStatus('error');
-      setErrorMessage(err instanceof Error ? err.message : 'An unexpected error occurred');
+      if (err instanceof ApiError) {
+        setErrorMessage(err.message);
+      } else {
+        setErrorMessage('An unexpected error occurred');
+      }
     }
   };
 

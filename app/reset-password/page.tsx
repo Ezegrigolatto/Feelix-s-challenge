@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { api, ApiError } from '@/lib/api';
 
 type FormStatus = 'idle' | 'loading' | 'success' | 'error';
 
@@ -30,6 +31,7 @@ export default function ResetPasswordPage() {
 
   useEffect(() => {
     if (!token) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setStatus('error');
       setApiError('Invalid or missing reset token. Please request a new password reset link.');
     }
@@ -88,22 +90,15 @@ export default function ResetPasswordPage() {
     setApiError('');
 
     try {
-      const response = await fetch('/api/auth/password-reset-confirm', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token, password }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to reset password');
-      }
-
+      await api.post('/auth/password-reset-confirm', { token, password });
       setStatus('success');
     } catch (err) {
       setStatus('error');
-      setApiError(err instanceof Error ? err.message : 'An unexpected error occurred');
+      if (err instanceof ApiError) {
+        setApiError(err.message);
+      } else {
+        setApiError('An unexpected error occurred');
+      }
     }
   };
 

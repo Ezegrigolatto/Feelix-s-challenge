@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { api, ApiError } from '@/lib/api';
 
 type FormStatus = 'idle' | 'loading' | 'error';
 
@@ -50,23 +51,15 @@ export default function LoginPage() {
     setApiError('');
 
     try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, rememberMe }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Login failed');
-      }
-
-      // Redirect to dashboard on success
+      await api.post('/auth/login', { email, password, rememberMe });
       router.push('/dashboard');
     } catch (err) {
       setStatus('error');
-      setApiError(err instanceof Error ? err.message : 'An unexpected error occurred');
+      if (err instanceof ApiError) {
+        setApiError(err.message);
+      } else {
+        setApiError('An unexpected error occurred');
+      }
     }
   };
 
@@ -233,7 +226,7 @@ export default function LoginPage() {
 
           <p className="mt-6 text-center text-sm text-gray-600">
             Don&apos;t have an account?{' '}
-            <Link href="/login" className="font-medium text-blue-600 hover:text-blue-500">
+            <Link href="/register" className="font-medium text-blue-600 hover:text-blue-500">
               Sign up
             </Link>
           </p>

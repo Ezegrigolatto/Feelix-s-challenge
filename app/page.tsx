@@ -5,6 +5,7 @@ import { ErrorState } from '@/components/error-state';
 import { LoadingState } from '@/components/loading-state';
 import { useState, useEffect, useCallback } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { api, ApiError } from '@/lib/api';
 
 interface Metrics {
   totalUsers: number;
@@ -70,19 +71,13 @@ export default function DashboardPage() {
     setError(null);
 
     try {
-      const params = new URLSearchParams({
-        time: filters.time,
-        category: filters.category,
-        status: filters.status,
+      const result = await api.get<AnalyticsResponse>('/analytics', {
+        params: {
+          time: filters.time,
+          category: filters.category,
+          status: filters.status,
+        },
       });
-
-      const response = await fetch(`/api/analytics?${params}`);
-
-      if (!response.ok) {
-        throw new Error(`Error ${response.status}: ${response.statusText}`);
-      }
-
-      const result = await response.json();
 
       if (!result.metrics || !result.chartData || !result.breakdown) {
         throw new Error('Invalid API response');
@@ -90,7 +85,11 @@ export default function DashboardPage() {
 
       setData(result);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
+      if (err instanceof ApiError) {
+        setError(err.message);
+      } else {
+        setError(err instanceof Error ? err.message : 'Unknown error');
+      }
     } finally {
       setIsLoading(false);
     }
